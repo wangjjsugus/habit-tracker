@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Habit Tracker</title>
+  <!-- Load the open-source canvas-confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background-color: #f3f4f6;
+      color: #111827;
+      display: flex;
+      justify-content: center;
+      padding-top: 50px;
+      margin: 0;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .card {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+      width: 380px;
+      box-sizing: border-box;
+      transition: background-color 0.2s ease;
+    }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+    .btn-theme {
+      background: none;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 6px 10px;
+      line-height: 1;
+    }
+    .progress-section {
+      margin-bottom: 20px;
+    }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+    .progress-track {
+      background-color: #e5e7eb;
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      background-color: #16a34a;
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+    input[type="text"]:focus {
+      border-color: #2563eb;
+    }
+    button.primary {
+      background-color: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .filters {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .filter-btn {
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #4b5563;
+      cursor: pointer;
+    }
+    .filter-btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+    .habit-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .habit-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+    .habit-item .title {
+      flex: 1;
+      margin-right: 12px;
+      font-size: 14px;
+    }
+    .habit-item .title.completed {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+    .actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .btn-toggle {
+      background-color: #e5e7eb;
+      color: #374151;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-toggle.done {
+      background-color: #16a34a;
+      color: #ffffff;
+    }
+    .btn-delete {
+      background-color: transparent;
+      color: #9ca3af;
+      border: none;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .btn-delete:hover {
+      background-color: #fee2e2;
+      color: #dc2626;
+    }
+    .empty-msg {
+      color: #9ca3af;
+      font-size: 14px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .footer-actions {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn-secondary {
+      background: none;
+      border: 1px solid #d1d5db;
+      color: #4b5563;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-secondary:hover {
+      background-color: #f9fafb;
+      color: #111827;
+    }
+
+    /* Dark mode styling overrides */
+    body.dark {
+      background-color: #111827;
+      color: #f9fafb;
+    }
+    body.dark .card {
+      background-color: #1f2937;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+    }
+    body.dark .btn-theme {
+      border-color: #374151;
+    }
+    body.dark .progress-track {
+      background-color: #374151;
+    }
+    body.dark .progress-header {
+      color: #9ca3af;
+    }
+    body.dark input[type="text"] {
+      background-color: #374151;
+      border-color: #4b5563;
+      color: #f9fafb;
+    }
+    body.dark .filter-btn {
+      background-color: #374151;
+      border-color: #4b5563;
+      color: #d1d5db;
+    }
+    body.dark .filter-btn.active {
+      background-color: #2563eb;
+      border-color: #2563eb;
+      color: #ffffff;
+    }
+    body.dark .habit-item {
+      background-color: #374151;
+      border-color: #4b5563;
+    }
+    body.dark .habit-item .title.completed {
+      color: #6b7280;
+    }
+    body.dark .btn-toggle {
+      background-color: #4b5563;
+      color: #e5e7eb;
+    }
+    body.dark .btn-toggle.done {
+      background-color: #16a34a;
+      color: #ffffff;
+    }
+    body.dark .btn-delete:hover {
+      background-color: #7f1d1d;
+      color: #f87171;
+    }
+    body.dark .footer-actions {
+      border-top-color: #374151;
+    }
+    body.dark .btn-secondary {
+      border-color: #4b5563;
+      color: #9ca3af;
+    }
+    body.dark .btn-secondary:hover {
+      background-color: #374151;
+      color: #f9fafb;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="header-row">
+      <h1>Daily Habits</h1>
+      <button class="btn-theme" id="theme-btn" onclick="toggleTheme()" title="Toggle Dark Mode">🌙</button>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-header">
+        <span id="progress-text">0 of 0 completed</span>
+        <span id="progress-percent">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <input type="text" id="habit-input" placeholder="Enter a new habit..." />
+      <button class="primary" onclick="addHabit()">Add</button>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" id="filter-all" onclick="setFilter('all')">All</button>
+      <button class="filter-btn" id="filter-active" onclick="setFilter('active')">Active</button>
+      <button class="filter-btn" id="filter-completed" onclick="setFilter('completed')">Completed</button>
+    </div>
+
+    <ul class="habit-list" id="habit-list"></ul>
+
+    <div class="footer-actions">
+      <button class="btn-secondary" onclick="resetDay()">Reset for Tomorrow</button>
+    </div>
+  </div>
+
+  <script>
+    let habits = JSON.parse(localStorage.getItem("habits")) || [];
+    let currentFilter = "all";
+    let previousPercent = 0;
+    let isDark = localStorage.getItem("theme") === "dark";
+
+    function applyTheme() {
+      if (isDark) {
+        document.body.classList.add("dark");
+        document.getElementById("theme-btn").textContent = "☀️";
+      } else {
+        document.body.classList.remove("dark");
+        document.getElementById("theme-btn").textContent = "🌙";
+      }
+    }
+
+    function toggleTheme() {
+      isDark = !isDark;
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+      applyTheme();
+    }
+
+    function saveHabits() {
+      localStorage.setItem("habits", JSON.stringify(habits));
+    }
+
+    function triggerConfetti() {
+      if (typeof confetti === "function") {
+        confetti({
+          particleCount: 90,
+          spread: 60,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    function updateProgress() {
+      const total = habits.length;
+      const completed = habits.filter((h) => h.completed).length;
+      const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      document.getElementById("progress-text").textContent = `${completed} of ${total} completed`;
+      document.getElementById("progress-percent").textContent = `${percent}%`;
+      document.getElementById("progress-bar").style.width = `${percent}%`;
+
+      if (total > 0 && percent === 100 && previousPercent < 100) {
+        triggerConfetti();
+      }
+      previousPercent = percent;
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll(".filter-btn").forEach((btn) => btn.classList.remove("active"));
+      document.getElementById(`filter-${filter}`).classList.add("active");
+      renderHabits();
+    }
+
+    function renderHabits() {
+      const list = document.getElementById("habit-list");
+      list.innerHTML = "";
+
+      let filteredHabits = habits;
+      if (currentFilter === "active") {
+        filteredHabits = habits.filter((h) => !h.completed);
+      } else if (currentFilter === "completed") {
+        filteredHabits = habits.filter((h) => h.completed);
+      }
+
+      if (filteredHabits.length === 0) {
+        list.innerHTML = '<li class="empty-msg">No habits to show.</li>';
+      } else {
+        filteredHabits.forEach((habit) => {
+          const li = document.createElement("li");
+          li.className = "habit-item";
+
+          const title = document.createElement("span");
+          title.className = "title" + (habit.completed ? " completed" : "");
+          title.textContent = habit.text;
+
+          const actions = document.createElement("div");
+          actions.className = "actions";
+
+          const toggleBtn = document.createElement("button");
+          toggleBtn.className = "btn-toggle" + (habit.completed ? " done" : "");
+          toggleBtn.textContent = habit.completed ? "Completed! 🎉" : "Done";
+          toggleBtn.onclick = () => toggleHabit(habit.id);
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.className = "btn-delete";
+          deleteBtn.textContent = "✕";
+          deleteBtn.title = "Delete habit";
+          deleteBtn.onclick = () => deleteHabit(habit.id);
+
+          actions.appendChild(toggleBtn);
+          actions.appendChild(deleteBtn);
+
+          li.appendChild(title);
+          li.appendChild(actions);
+
+          list.appendChild(li);
+        });
+      }
+
+      updateProgress();
+    }
+
+    function addHabit() {
+      const input = document.getElementById("habit-input");
+      const text = input.value.trim();
+
+      if (text === "") return;
+
+      const newHabit = {
+        id: Date.now(),
+        text: text,
+        completed: false
+      };
+
+      habits.push(newHabit);
+      saveHabits();
+      renderHabits();
+
+      input.value = "";
+    }
+
+    function toggleHabit(id) {
+      habits = habits.map((habit) => {
+        if (habit.id === id) {
+          return { ...habit, completed: !habit.completed };
+        }
+        return habit;
+      });
+      saveHabits();
+      renderHabits();
+    }
+
+    function deleteHabit(id) {
+      habits = habits.filter((habit) => habit.id !== id);
+      saveHabits();
+      renderHabits();
+    }
+
+    function resetDay() {
+      if (habits.length === 0) return;
+      habits = habits.map((h) => ({ ...h, completed: false }));
+      saveHabits();
+      renderHabits();
+    }
+
+    document.getElementById("habit-input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addHabit();
+    });
+
+    // Apply saved theme and render on initial load
+    applyTheme();
+    renderHabits();
+  </script>
+
+</body>
+</html>
